@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "342761233169",
+    "project_id": "final-database-sms",
+    "storage_bucket": "final-database-sms.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:342761233169:android:f02d854504170d94840ab0",
+        "android_client_info": {
+          "package_name": "com.activity.adminapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzchb-EoK3uZTJJ6V0Ql0gvemO5zruAws"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:342761233169:android:a1328ef289a16dbf840ab0",
+        "android_client_info": {
+          "package_name": "com.activity.studentapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzchb-EoK3uZTJJ6V0Ql0gvemO5zruAws"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
