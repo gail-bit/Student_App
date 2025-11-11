@@ -7,6 +7,10 @@ android {
     namespace 'com.activity.studentapp'
     compileSdk 36
 
+    dataBinding {
+        enabled = true
+    }
+
     defaultConfig {
         applicationId "com.activity.studentapp"
         minSdk 24
@@ -30,12 +34,16 @@ android {
 }
 
 dependencies {
+    // Firebase
+    implementation platform('com.google.firebase:firebase-bom:32.7.2')
+    implementation 'com.google.firebase:firebase-auth-ktx'
+    implementation 'com.google.firebase:firebase-firestore-ktx'
 
+    // AndroidX
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
     implementation libs.constraintlayout
-    implementation libs.firebase.auth
     implementation libs.credentials
     implementation libs.credentials.play.services.auth
     implementation libs.googleid
