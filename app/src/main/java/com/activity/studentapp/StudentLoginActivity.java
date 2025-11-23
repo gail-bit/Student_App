@@ -319,13 +319,28 @@ public class StudentLoginActivity extends AppCompatActivity {
                 if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
                     DocumentSnapshot document = task.getResult().getDocuments().get(0);
                     String studentId = document.getString("studentId");
-                    if (studentId != null) {
+                    String temporaryPassword = document.getString("temporaryPassword");
+                    android.util.Log.d("StudentLogin", "RFID document data: " + document.getData());
+                    if (studentId != null && temporaryPassword != null) {
                         android.util.Log.d("StudentLogin", "RFID authentication successful for student: " + studentId);
-                        // Store student info and redirect
-                        sharedPreferences.edit().putString("studentId", studentId).putString("studentDocId", document.getId()).apply();
-                        showToast("Login successful!");
-                        redirectToMainActivity();
+                        // Sign in with Firebase Auth anonymously for RFID
+                        android.util.Log.d("StudentLogin", "Signing in RFID user anonymously");
+                        mAuth.signInAnonymously()
+                            .addOnCompleteListener(authTask -> {
+                                if (authTask.isSuccessful()) {
+                                    android.util.Log.d("StudentLogin", "RFID anonymous Firebase Auth sign in successful");
+                                    android.util.Log.d("StudentLogin", "Storing studentId: " + studentId + ", studentDocId: " + document.getId());
+                                    // Store student info and redirect
+                                    sharedPreferences.edit().putString("studentId", studentId).putString("studentDocId", document.getId()).apply();
+                                    showToast("Login successful!");
+                                    redirectToMainActivity();
+                                } else {
+                                    android.util.Log.e("StudentLogin", "RFID anonymous Firebase Auth sign in failed: " + authTask.getException().getMessage());
+                                    showToast("RFID authentication failed");
+                                }
+                            });
                     } else {
+                        android.util.Log.d("StudentLogin", "studentId or temporaryPassword is null in RFID document");
                         showToast("Invalid RFID card data");
                     }
                 } else {

@@ -7,8 +7,15 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.drawerlayout.widget.DrawerLayout;
+
+import com.google.android.material.navigation.NavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -38,6 +45,11 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar subjectsProgressBar;
     private TextView noSubjectsText;
     private Button logoutButton;
+    private ImageButton burgerMenu;
+    private LinearLayout profileSection;
+    private LinearLayout scheduleSection;
+    private DrawerLayout drawer;
+    private NavigationView navView;
     private SubjectAdapter subjectAdapter;
     private Map<String, String> subjectIdToInstructor;
     private Map<String, String> subjectIdToSchedule;
@@ -69,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
             setupRecyclerView();
             loadEnrolledSubjects();
             setupLogoutButton();
+            setupBurgerMenu();
         } else {
             // Launch the StudentLoginActivity
             Log.d(TAG, "Redirecting to login");
@@ -82,6 +95,11 @@ public class MainActivity extends AppCompatActivity {
         subjectsProgressBar = findViewById(R.id.subjectsProgressBar);
         noSubjectsText = findViewById(R.id.noSubjectsText);
         logoutButton = findViewById(R.id.logoutButton);
+        burgerMenu = findViewById(R.id.burgerMenu);
+        profileSection = findViewById(R.id.profileSection);
+        scheduleSection = findViewById(R.id.scheduleSection);
+        drawer = findViewById(R.id.drawer);
+        navView = findViewById(R.id.navView);
     }
 
     private void setupRecyclerView() {
@@ -91,6 +109,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadEnrolledSubjects() {
+        Log.d(TAG, "loadEnrolledSubjects called");
+        Log.d(TAG, "studentId: " + studentId);
+        Log.d(TAG, "studentDocId: " + studentDocId);
+        Log.d(TAG, "Firebase Auth current user: " + (mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : "null"));
+
         if (studentId == null || studentId.isEmpty()) {
             Log.e(TAG, "Student ID is null or empty");
             showNoSubjectsView("Student information not available");
@@ -121,12 +144,14 @@ public class MainActivity extends AppCompatActivity {
                     if (e != null) {
                         Log.e(TAG, "Error getting student data: ", e);
                         Log.d(TAG, "Exception type: " + e.getClass().getSimpleName());
+                        Log.d(TAG, "Exception message: " + e.getMessage());
                         showNoSubjectsView("Error loading student information.");
                         return;
                     }
                     Log.d(TAG, "Document exists: " + (documentSnapshot != null && documentSnapshot.exists()));
                     if (documentSnapshot != null && documentSnapshot.exists()) {
                         Log.d(TAG, "Student document fetched successfully. From cache: " + documentSnapshot.getMetadata().isFromCache());
+                        Log.d(TAG, "Student document data: " + documentSnapshot.getData());
                         String section = documentSnapshot.getString("section");
                         String gradeLevel = documentSnapshot.getString("gradeLevel");
                         Log.d(TAG, "Student section: " + section);
@@ -179,8 +204,13 @@ public class MainActivity extends AppCompatActivity {
                             .get()
                             .addOnCompleteListener(task -> {
                                 subjectsProgressBar.setVisibility(View.GONE);
+                                Log.d(TAG, "Subjects fetch task successful: " + task.isSuccessful());
+                                if (task.getException() != null) {
+                                    Log.e(TAG, "Subjects fetch exception: ", task.getException());
+                                }
 
                                 if (task.isSuccessful() && task.getResult() != null) {
+                                    Log.d(TAG, "Subjects result size: " + task.getResult().size());
                                     List<Subject> subjects = new ArrayList<>();
                                     for (QueryDocumentSnapshot document : task.getResult()) {
                                         try {
@@ -270,13 +300,27 @@ public class MainActivity extends AppCompatActivity {
         logoutButton.setOnClickListener(v -> {
             // Sign out from Firebase
             mAuth.signOut();
-            
+
             // Clear shared preferences
             sharedPreferences.edit().clear().apply();
-            
+
             // Redirect to login screen
             startActivity(new Intent(MainActivity.this, StudentLoginActivity.class));
             finish();
         });
+    }
+
+    private void setupBurgerMenu() {
+        navView.setNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.menu_profile) {
+                startActivity(new Intent(MainActivity.this, ProfileActivity.class));
+            } else if (id == R.id.menu_schedule) {
+                startActivity(new Intent(MainActivity.this, ScheduleActivity.class));
+            }
+            drawer.closeDrawer(navView);
+            return true;
+        });
+        burgerMenu.setOnClickListener(v -> drawer.openDrawer(navView));
     }
 }

@@ -21,7 +21,15 @@
             android:name=".MainActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
-            
+
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ScheduleActivity"
+            android:exported="false" />
+
         <activity
             android:name=".StudentLoginActivity"
             android:exported="true">
