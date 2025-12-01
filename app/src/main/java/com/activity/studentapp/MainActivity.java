@@ -6,16 +6,10 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
-import androidx.drawerlayout.widget.DrawerLayout;
-
-import com.google.android.material.navigation.NavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,22 +28,18 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
-    
+
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
     private SharedPreferences sharedPreferences;
     private String studentId;
     private String studentDocId;
-    
+
     private RecyclerView subjectsRecyclerView;
     private ProgressBar subjectsProgressBar;
     private TextView noSubjectsText;
-    private Button logoutButton;
-    private ImageButton burgerMenu;
-    private LinearLayout profileSection;
-    private LinearLayout scheduleSection;
-    private DrawerLayout drawer;
-    private NavigationView navView;
+    private TextView headerTitle;
+    private ImageButton menuButton;
     private SubjectAdapter subjectAdapter;
     private Map<String, String> subjectIdToInstructor;
     private Map<String, String> subjectIdToSchedule;
@@ -80,8 +70,7 @@ public class MainActivity extends AppCompatActivity {
             initializeViews();
             setupRecyclerView();
             loadEnrolledSubjects();
-            setupLogoutButton();
-            setupBurgerMenu();
+            setupMenuButton();
         } else {
             // Launch the StudentLoginActivity
             Log.d(TAG, "Redirecting to login");
@@ -94,12 +83,8 @@ public class MainActivity extends AppCompatActivity {
         subjectsRecyclerView = findViewById(R.id.subjectsRecyclerView);
         subjectsProgressBar = findViewById(R.id.subjectsProgressBar);
         noSubjectsText = findViewById(R.id.noSubjectsText);
-        logoutButton = findViewById(R.id.logoutButton);
-        burgerMenu = findViewById(R.id.burgerMenu);
-        profileSection = findViewById(R.id.profileSection);
-        scheduleSection = findViewById(R.id.scheduleSection);
-        drawer = findViewById(R.id.drawer);
-        navView = findViewById(R.id.navView);
+        headerTitle = findViewById(R.id.headerTitle);
+        menuButton = findViewById(R.id.menuButton);
     }
 
     private void setupRecyclerView() {
@@ -112,7 +97,8 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "loadEnrolledSubjects called");
         Log.d(TAG, "studentId: " + studentId);
         Log.d(TAG, "studentDocId: " + studentDocId);
-        Log.d(TAG, "Firebase Auth current user: " + (mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : "null"));
+        Log.d(TAG, "Firebase Auth current user: "
+                + (mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : "null"));
 
         if (studentId == null || studentId.isEmpty()) {
             Log.e(TAG, "Student ID is null or empty");
@@ -150,7 +136,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                     Log.d(TAG, "Document exists: " + (documentSnapshot != null && documentSnapshot.exists()));
                     if (documentSnapshot != null && documentSnapshot.exists()) {
-                        Log.d(TAG, "Student document fetched successfully. From cache: " + documentSnapshot.getMetadata().isFromCache());
+                        Log.d(TAG, "Student document fetched successfully. From cache: "
+                                + documentSnapshot.getMetadata().isFromCache());
                         Log.d(TAG, "Student document data: " + documentSnapshot.getData());
                         String section = documentSnapshot.getString("section");
                         String gradeLevel = documentSnapshot.getString("gradeLevel");
@@ -226,9 +213,9 @@ public class MainActivity extends AppCompatActivity {
 
                                             // Log the subject details for debugging
                                             Log.d(TAG, "Subject loaded: " + subject.getName() +
-                                                  " (Code: " + subject.getCode() +
-                                                  ", Instructor: " + subject.getInstructor() +
-                                                  ", Room: " + subject.getRoom() + ")");
+                                                    " (Code: " + subject.getCode() +
+                                                    ", Instructor: " + subject.getInstructor() +
+                                                    ", Room: " + subject.getRoom() + ")");
 
                                             subjects.add(subject);
                                         } catch (Exception e) {
@@ -270,7 +257,8 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "Subjects query successful. Documents count: " + querySnapshot.size());
                         List<Subject> subjects = new ArrayList<>();
                         for (QueryDocumentSnapshot document : querySnapshot) {
-                            Log.d(TAG, "Subject document: " + document.getId() + ", from cache: " + document.getMetadata().isFromCache());
+                            Log.d(TAG, "Subject document: " + document.getId() + ", from cache: "
+                                    + document.getMetadata().isFromCache());
                             Subject subject = document.toObject(Subject.class);
                             subject.setId(document.getId());
                             subjects.add(subject);
@@ -296,31 +284,31 @@ public class MainActivity extends AppCompatActivity {
         noSubjectsText.setVisibility(View.VISIBLE);
     }
 
-    private void setupLogoutButton() {
-        logoutButton.setOnClickListener(v -> {
-            // Sign out from Firebase
-            mAuth.signOut();
-
-            // Clear shared preferences
-            sharedPreferences.edit().clear().apply();
-
-            // Redirect to login screen
-            startActivity(new Intent(MainActivity.this, StudentLoginActivity.class));
-            finish();
+    private void setupMenuButton() {
+        menuButton.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(MainActivity.this, menuButton);
+            popup.getMenuInflater().inflate(R.menu.burger_menu, popup.getMenu());
+            popup.setOnMenuItemClickListener(item -> {
+                int id = item.getItemId();
+                if (id == R.id.menu_profile) {
+                    startActivity(new Intent(MainActivity.this, ProfileActivity.class));
+                    return true;
+                } else if (id == R.id.menu_schedule) {
+                    startActivity(new Intent(MainActivity.this, ScheduleActivity.class));
+                    return true;
+                } else if (id == R.id.menu_logout) {
+                    // Sign out from Firebase
+                    mAuth.signOut();
+                    // Clear shared preferences
+                    sharedPreferences.edit().clear().apply();
+                    // Redirect to login screen
+                    startActivity(new Intent(MainActivity.this, StudentLoginActivity.class));
+                    finish();
+                    return true;
+                }
+                return false;
+            });
+            popup.show();
         });
-    }
-
-    private void setupBurgerMenu() {
-        navView.setNavigationItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.menu_profile) {
-                startActivity(new Intent(MainActivity.this, ProfileActivity.class));
-            } else if (id == R.id.menu_schedule) {
-                startActivity(new Intent(MainActivity.this, ScheduleActivity.class));
-            }
-            drawer.closeDrawer(navView);
-            return true;
-        });
-        burgerMenu.setOnClickListener(v -> drawer.openDrawer(navView));
     }
 }

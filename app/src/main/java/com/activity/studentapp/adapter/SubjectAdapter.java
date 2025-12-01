@@ -47,7 +47,6 @@ public class SubjectAdapter extends RecyclerView.Adapter<SubjectAdapter.SubjectV
 
     static class SubjectViewHolder extends RecyclerView.ViewHolder {
         private final TextView subjectNameText;
-        private final TextView subjectCodeText;
         private final TextView subjectScheduleText;
         private final TextView instructorNameText;
         private final TextView roomText;
@@ -55,16 +54,14 @@ public class SubjectAdapter extends RecyclerView.Adapter<SubjectAdapter.SubjectV
         public SubjectViewHolder(@NonNull View itemView) {
             super(itemView);
             subjectNameText = itemView.findViewById(R.id.subjectNameText);
-            subjectCodeText = itemView.findViewById(R.id.subjectCodeText);
             subjectScheduleText = itemView.findViewById(R.id.subjectScheduleText);
             instructorNameText = itemView.findViewById(R.id.instructorNameText);
             roomText = itemView.findViewById(R.id.roomText);
         }
 
         public void bind(Subject subject) {
-            Log.d("SubjectAdapter", "Binding subject: " + subject.getName() + ", code: " + subject.getCode());
+            Log.d("SubjectAdapter", "Binding subject: " + subject.getName());
             subjectNameText.setText(subject.getName() != null ? subject.getName() : "No Name");
-            subjectCodeText.setText(subject.getCode() != null ? subject.getCode() : "No Code");
             subjectScheduleText.setText(subject.getSchedule() != null ? subject.getSchedule() : "No Schedule");
             instructorNameText.setText(subject.getInstructor() != null ? subject.getInstructor() : "No Instructor");
             roomText.setText(subject.getRoom() != null ? subject.getRoom() : "No Room");

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
-    android:background="#000000"
+    android:background="@color/white"
     app:cardElevation="2dp"
     app:cardCornerRadius="8dp">
 
@@ -13,88 +13,89 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="20dp">
 
-        <TextView
-            android:id="@+id/subjectNameText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:includeFontPadding="false"
-            android:text="Subject Name"
-            style="@style/WhiteText"/>
-
+        <!-- Subject Name and Schedule Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="4dp">
+            android:layout_marginBottom="8dp">
 
             <TextView
-                android:id="@+id/subjectCodeText"
+                android:id="@+id/subjectNameText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="14sp"
+                android:textSize="20sp"
+                android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:includeFontPadding="false"
-                android:text="Subject Code"
-                style="@style/WhiteText"/>
+                android:text="Subject Name"
+                android:textColor="@color/dark_green"/>
 
             <TextView
                 android:id="@+id/subjectScheduleText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:includeFontPadding="false"
                 android:text="Schedule"
-                style="@style/WhiteText"/>
+                android:textColor="@color/dark_green"/>
         </LinearLayout>
 
+        <!-- Divider -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#FFFFFF"
-            android:layout_marginVertical="8dp"/>
+            android:background="@color/dark_green"
+            android:layout_marginBottom="8dp"/>
 
+        <!-- Instructor and Room Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="Instructor: "
+                android:textColor="@color/dark_green"/>
+
+            <TextView
                 android:id="@+id/instructorNameText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:includeFontPadding="false"
                 android:text="Instructor Name"
-                style="@style/WhiteText"/>
+                android:textColor="@color/dark_green"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="Room: "
+                android:textColor="@color/dark_green"/>
 
             <TextView
                 android:id="@+id/roomText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:drawableStart="@drawable/ic_room"
-                android:drawablePadding="4dp"
-                android:drawableTint="#FFFFFF"
+                android:textSize="16sp"
+                android:drawableEnd="@drawable/ic_room"
+                android:drawablePadding="6dp"
+                android:drawableTint="@color/dark_green"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:includeFontPadding="false"
                 android:text="Room"
-                style="@style/WhiteText"/>
+                android:textColor="@color/dark_green"/>
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

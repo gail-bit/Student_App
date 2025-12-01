@@ -10,4 +10,9 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="error">#FF0000</color>
+
+    <!-- Custom colors for student login -->
+    <color name="dirty_white">#FFF5F5F5</color>
+    <color name="dark_green">#FF2E7D32</color>
+    <color name="green">#FF4CAF50</color>
 </resources>

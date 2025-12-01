@@ -6,4 +6,7 @@
     <item
         android:id="@+id/menu_schedule"
         android:title="Schedule" />
+    <item
+        android:id="@+id/menu_logout"
+        android:title="Logout" />
 </menu>
