@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private SubjectAdapter subjectAdapter;
     private Map<String, String> subjectIdToInstructor;
     private Map<String, String> subjectIdToSchedule;
+    private List<Subject> currentSubjects;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +92,14 @@ public class MainActivity extends AppCompatActivity {
         subjectAdapter = new SubjectAdapter(new ArrayList<>());
         subjectsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         subjectsRecyclerView.setAdapter(subjectAdapter);
+
+        // Set click listener for subject items
+        subjectAdapter.setOnSubjectClickListener(subject -> {
+            // Navigate to subject details activity
+            Intent intent = new Intent(MainActivity.this, SubjectDetailsActivity.class);
+            intent.putExtra("subject", subject);
+            startActivity(intent);
+        });
     }
 
     private void loadEnrolledSubjects() {
@@ -155,6 +164,17 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    private void updateSubjectsWithScheduleInfo() {
+        if (currentSubjects != null) {
+            for (Subject subject : currentSubjects) {
+                subject.setSchedule(subjectIdToSchedule.get(subject.getId()));
+                subject.setInstructor(subjectIdToInstructor.get(subject.getId()));
+            }
+            subjectAdapter.updateSubjects(currentSubjects);
+            Log.d(TAG, "Updated subjects with schedule info");
+        }
+    }
+
     private void fetchSubjectsByGradeLevel(String gradeLevel, String section) {
         Log.d(TAG, "Fetching subjects for gradeLevel: " + gradeLevel + ", section: " + section);
         // Show loading state
@@ -162,16 +182,19 @@ public class MainActivity extends AppCompatActivity {
         noSubjectsText.setVisibility(View.GONE);
         subjectsRecyclerView.setVisibility(View.GONE);
 
-        // First, load schedules for the section
+        // First, load schedules for the section with real-time updates
         String fullSectionName = gradeLevel + " - " + section;
         db.collection("class_schedule")
                 .whereEqualTo("sectionName", fullSectionName)
-                .get()
-                .addOnCompleteListener(scheduleTask -> {
-                    if (scheduleTask.isSuccessful() && scheduleTask.getResult() != null) {
-                        subjectIdToInstructor.clear();
-                        subjectIdToSchedule.clear();
-                        for (QueryDocumentSnapshot doc : scheduleTask.getResult()) {
+                .addSnapshotListener((querySnapshot, e) -> {
+                    if (e != null) {
+                        Log.e(TAG, "Error listening to schedules: ", e);
+                        return;
+                    }
+                    subjectIdToInstructor.clear();
+                    subjectIdToSchedule.clear();
+                    if (querySnapshot != null) {
+                        for (QueryDocumentSnapshot doc : querySnapshot) {
                             String subjectId = doc.getString("subjectId");
                             String instructorName = doc.getString("instructorName");
                             String timeFrame = doc.getString("timeFrame");
@@ -180,64 +203,66 @@ public class MainActivity extends AppCompatActivity {
                                 subjectIdToSchedule.put(subjectId, timeFrame);
                             }
                         }
-                        Log.d(TAG, "Loaded schedules for " + scheduleTask.getResult().size() + " subjects");
-                    } else {
-                        Log.e(TAG, "Error loading schedules: ", scheduleTask.getException());
+                        Log.d(TAG, "Loaded schedules for " + querySnapshot.size() + " subjects (real-time update)");
+                        updateSubjectsWithScheduleInfo();
+                    }
+                });
+
+        // Now fetch subjects with real-time updates
+        db.collection("subjects")
+                .whereEqualTo("gradeLevel", gradeLevel)
+                .addSnapshotListener((querySnapshot, e) -> {
+                    subjectsProgressBar.setVisibility(View.GONE);
+                    if (e != null) {
+                        Log.e(TAG, "Error listening to subjects: ", e);
+                        showNoSubjectsView("Error loading subjects. Please try again.");
+                        return;
                     }
 
-                    // Now fetch subjects
-                    db.collection("subjects")
-                            .whereEqualTo("gradeLevel", gradeLevel)
-                            .get()
-                            .addOnCompleteListener(task -> {
-                                subjectsProgressBar.setVisibility(View.GONE);
-                                Log.d(TAG, "Subjects fetch task successful: " + task.isSuccessful());
-                                if (task.getException() != null) {
-                                    Log.e(TAG, "Subjects fetch exception: ", task.getException());
-                                }
+                    if (querySnapshot != null) {
+                        Log.d(TAG, "Subjects snapshot received. Size: " + querySnapshot.size());
+                        List<Subject> subjects = new ArrayList<>();
+                        for (QueryDocumentSnapshot document : querySnapshot) {
+                            try {
+                                Log.d(TAG, "Processing document: " + document.getId());
+                                Log.d(TAG, "Document data: " + document.getData());
+                                Subject subject = new Subject();
+                                subject.setId(document.getId());
+                                subject.setCode(document.getId()); // Use document ID as code
+                                subject.setName(document.getString("subjectName"));
+                                subject.setDescription(document.getString("description"));
+                                subject.setInstructor(subjectIdToInstructor.get(document.getId()));
+                                subject.setSchedule(subjectIdToSchedule.get(document.getId()));
+                                subject.setRoom(section);
 
-                                if (task.isSuccessful() && task.getResult() != null) {
-                                    Log.d(TAG, "Subjects result size: " + task.getResult().size());
-                                    List<Subject> subjects = new ArrayList<>();
-                                    for (QueryDocumentSnapshot document : task.getResult()) {
-                                        try {
-                                            Log.d(TAG, "Processing document: " + document.getId());
-                                            Log.d(TAG, "Document data: " + document.getData());
-                                            Subject subject = new Subject();
-                                            subject.setId(document.getId());
-                                            subject.setCode(document.getString("description"));
-                                            subject.setName(document.getString("subjectName"));
-                                            subject.setInstructor(subjectIdToInstructor.get(document.getId()));
-                                            subject.setSchedule(subjectIdToSchedule.get(document.getId()));
-                                            subject.setRoom(section);
+                                // Log the subject details for debugging
+                                Log.d(TAG, "Subject loaded: " + subject.getName() +
+                                        " (Code: " + subject.getCode() +
+                                        ", Instructor: " + subject.getInstructor() +
+                                        ", Room: " + subject.getRoom() + ")");
 
-                                            // Log the subject details for debugging
-                                            Log.d(TAG, "Subject loaded: " + subject.getName() +
-                                                    " (Code: " + subject.getCode() +
-                                                    ", Instructor: " + subject.getInstructor() +
-                                                    ", Room: " + subject.getRoom() + ")");
+                                subjects.add(subject);
+                            } catch (Exception ex) {
+                                Log.e(TAG, "Error parsing subject: " + ex.getMessage());
+                            }
+                        }
 
-                                            subjects.add(subject);
-                                        } catch (Exception e) {
-                                            Log.e(TAG, "Error parsing subject: " + e.getMessage());
-                                        }
-                                    }
+                        currentSubjects = new ArrayList<>(subjects);
+                        updateSubjectsWithScheduleInfo();
 
-                                    if (!subjects.isEmpty()) {
-                                        // Update the adapter with the new list of subjects
-                                        subjectAdapter.updateSubjects(subjects);
-                                        subjectsRecyclerView.setVisibility(View.VISIBLE);
-                                        noSubjectsText.setVisibility(View.GONE);
-                                        Log.d(TAG, "Displaying " + subjects.size() + " subjects");
-                                    } else {
-                                        Log.d(TAG, "No subjects found for grade level: " + gradeLevel);
-                                        showNoSubjectsView("No subjects found for your grade level.");
-                                    }
-                                } else {
-                                    Log.e(TAG, "Error getting subjects: ", task.getException());
-                                    showNoSubjectsView("Error loading subjects. Please try again.");
-                                }
-                            });
+                        if (!subjects.isEmpty()) {
+                            // Update the adapter with the new list of subjects
+                            subjectAdapter.updateSubjects(subjects);
+                            subjectsRecyclerView.setVisibility(View.VISIBLE);
+                            noSubjectsText.setVisibility(View.GONE);
+                            Log.d(TAG, "Displaying " + subjects.size() + " subjects (real-time update)");
+                        } else {
+                            Log.d(TAG, "No subjects found for grade level: " + gradeLevel);
+                            showNoSubjectsView("No subjects found for your grade level.");
+                        }
+                    } else {
+                        showNoSubjectsView("No subjects data available.");
+                    }
                 });
     }
 

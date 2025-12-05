@@ -54,7 +54,7 @@ public class ScheduleRowAdapter extends RecyclerView.Adapter<ScheduleRowAdapter.
 
     private void setCellBackground(TextView textView, String subject) {
         if (subject != null && !subject.isEmpty()) {
-            textView.setBackgroundColor(textView.getContext().getResources().getColor(android.R.color.holo_blue_light));
+            textView.setBackgroundColor(textView.getContext().getResources().getColor(R.color.green));
             textView.setTextColor(textView.getContext().getResources().getColor(android.R.color.white));
         } else {
             textView.setBackgroundResource(R.drawable.cell_border);

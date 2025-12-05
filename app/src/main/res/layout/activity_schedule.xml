@@ -13,7 +13,6 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
-        android:theme="@style/ThemeOverlay.Material3.Dark"
         app:title="Schedule"
         app:titleTextColor="@android:color/white" />
 
@@ -29,16 +28,91 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/scheduleRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
-            android:clipToPadding="false"
-            tools:listitem="@layout/item_schedule_row"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-        <ProgressBar
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:background="@color/dark_green">
+
+                        <TextView
+                            android:layout_width="100dp"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:background="@drawable/cell_border"
+                            android:gravity="center"
+                            android:text="Time/Date"
+                            android:textColor="@android:color/black" />
+
+                        <TextView
+                            android:layout_width="120dp"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:background="@drawable/cell_border"
+                            android:gravity="center"
+                            android:text="Monday"
+                            android:textColor="@android:color/black" />
+
+                        <TextView
+                            android:layout_width="120dp"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:background="@drawable/cell_border"
+                            android:gravity="center"
+                            android:text="Tuesday"
+                            android:textColor="@android:color/black" />
+
+                        <TextView
+                            android:layout_width="120dp"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:background="@drawable/cell_border"
+                            android:gravity="center"
+                            android:text="Wednesday"
+                            android:textColor="@android:color/black" />
+
+                        <TextView
+                            android:layout_width="120dp"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:background="@drawable/cell_border"
+                            android:gravity="center"
+                            android:text="Thursday"
+                            android:textColor="@android:color/black" />
+
+                        <TextView
+                            android:layout_width="120dp"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:background="@drawable/cell_border"
+                            android:gravity="center"
+                            android:text="Friday"
+                            android:textColor="@android:color/black" />
+
+                    </LinearLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/scheduleRecyclerView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false"
+                        android:nestedScrollingEnabled="true"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                        tools:listitem="@layout/item_schedule_row" />
+
+                </LinearLayout>
+
+            </HorizontalScrollView>
+
+            <ProgressBar
             android:id="@+id/scheduleProgressBar"
             style="?android:attr/progressBarStyle"
             android:layout_width="wrap_content"

@@ -15,4 +15,13 @@
     <color name="dirty_white">#FFF5F5F5</color>
     <color name="dark_green">#FF2E7D32</color>
     <color name="green">#FF4CAF50</color>
+    <color name="gray_600">#FF757575</color>
+
+    <!-- Additional colors for profile layout -->
+    <color name="gray_300">#FFE0E0E0</color>
+    <color name="gray_500">#FF9E9E9E</color>
+    <color name="green_600">#FF43A047</color>
+    <color name="red_600">#FFE53935</color>
+    <color name="blue_600">#FF1E88E5</color>
+    <color name="orange_600">#FFFB8C00</color>
 </resources>

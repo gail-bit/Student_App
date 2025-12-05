@@ -31,6 +31,30 @@
             android:exported="false" />
 
         <activity
+            android:name=".SubjectDetailsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".AssignmentDetailsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".QuizDetailsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ExamDetailsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".TakeQuizActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".TakeExamActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".StudentLoginActivity"
             android:exported="true">
             <intent-filter>

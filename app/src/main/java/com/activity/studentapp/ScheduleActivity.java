@@ -109,51 +109,30 @@ public class ScheduleActivity extends AppCompatActivity {
 
         db.collection("class_schedule")
                 .whereEqualTo("sectionName", fullSectionName)
-                .get()
-                .addOnCompleteListener(task -> {
+                .addSnapshotListener((querySnapshot, e) -> {
                     scheduleProgressBar.setVisibility(View.GONE);
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        Log.d(TAG, "Schedule query successful, documents: " + task.getResult().size());
-                        List<Schedule> schedules = new ArrayList<>();
-                        int total = task.getResult().size();
-                        int[] processed = {0};
-                        if (total == 0) {
-                            Log.d(TAG, "No schedule documents found");
-                            showNoSchedule("No schedule found");
-                            return;
-                        }
-                        for (QueryDocumentSnapshot doc : task.getResult()) {
-                            String subjectId = doc.getString("subjectId");
-                            String instructorName = doc.getString("instructorName");
-                            String timeFrame = doc.getString("timeFrame");
-                            Log.d(TAG, "Processing schedule doc, subjectId: " + subjectId + ", timeFrame: " + timeFrame);
-
-                            // Get subject name from subjects collection
-                            db.collection("subjects").document(subjectId).get()
-                                    .addOnSuccessListener(subjectDoc -> {
-                                        String subjectName = subjectDoc.getString("subjectName");
-                                        Log.d(TAG, "Fetched subject: " + subjectName + ", timeFrame: " + timeFrame);
-                                        if (subjectName != null) {
-                                            schedules.add(new Schedule(subjectName, instructorName, timeFrame));
-                                        }
-                                        processed[0]++;
-                                        if (processed[0] == total) {
-                                            Log.d(TAG, "All subjects processed, displaying schedules");
-                                            displaySchedules(schedules);
-                                        }
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Log.e(TAG, "Failed to fetch subject: " + subjectId, e);
-                                        processed[0]++;
-                                        if (processed[0] == total) {
-                                            Log.d(TAG, "All subjects processed (with failures), displaying schedules");
-                                            displaySchedules(schedules);
-                                        }
-                                    });
-                        }
-                    } else {
-                        Log.e(TAG, "Error loading schedule", task.getException());
+                    if (e != null) {
+                        Log.e(TAG, "Error listening to schedule", e);
                         showNoSchedule("Error loading schedule");
+                        return;
+                    }
+                    if (querySnapshot != null) {
+                        Log.d(TAG, "Schedule snapshot received, documents: " + querySnapshot.size());
+                        List<Schedule> schedules = new ArrayList<>();
+                        for (QueryDocumentSnapshot doc : querySnapshot) {
+                            try {
+                                Schedule schedule = doc.toObject(Schedule.class);
+                                Log.d(TAG, "Fetched schedule: " + schedule.getSubjectName() + " on " + schedule.getDay()
+                                        + " at " + schedule.getTimeFrame());
+                                schedules.add(schedule);
+                            } catch (Exception ex) {
+                                Log.e(TAG, "Error parsing schedule document", ex);
+                            }
+                        }
+                        Log.d(TAG, "Total schedules fetched: " + schedules.size());
+                        displaySchedules(schedules);
+                    } else {
+                        showNoSchedule("No schedule data available");
                     }
                 });
     }
@@ -172,52 +151,97 @@ public class ScheduleActivity extends AppCompatActivity {
 
         List<ScheduleRow> rows = new ArrayList<>();
 
-        // Header row
-        ScheduleRow header = new ScheduleRow("Time");
-        header.setSubject(0, "Mon");
-        header.setSubject(1, "Tue");
-        header.setSubject(2, "Wed");
-        header.setSubject(3, "Thu");
-        header.setSubject(4, "Fri");
-        rows.add(header);
+        // Group schedules by time frame
+        Map<String, List<Schedule>> timeToSchedules = new HashMap<>();
+        for (Schedule schedule : sorted) {
+            String timeFrame = schedule.getTimeFrame();
+            if (!timeToSchedules.containsKey(timeFrame)) {
+                timeToSchedules.put(timeFrame, new ArrayList<>());
+            }
+            timeToSchedules.get(timeFrame).add(schedule);
+        }
 
-        // Map time to row
-        Map<Integer, ScheduleRow> timeToRow = new HashMap<>();
+        // Create rows for each time frame
+        for (String timeFrame : timeToSchedules.keySet()) {
+            String timeStr = timeFrame.split(" - ")[0];
+            ScheduleRow row = new ScheduleRow(timeStr);
 
-        for (int i = 0; i < Math.min(sorted.size(), 5); i++) {
-            Schedule schedule = sorted.get(i);
-            int minutes = parseTime(schedule.getTimeFrame());
-            String timeStr = schedule.getTimeFrame().split(" - ")[0];
+            List<Schedule> timeSchedules = timeToSchedules.get(timeFrame);
+            for (Schedule schedule : timeSchedules) {
+                String day = schedule.getDay();
+                int[] dayIndices = getDayIndices(day);
 
-            if (!timeToRow.containsKey(minutes)) {
-                ScheduleRow row = new ScheduleRow(timeStr);
-                timeToRow.put(minutes, row);
-                rows.add(row);
+                for (int dayIndex : dayIndices) {
+                    if (dayIndex >= 0 && dayIndex < 5) {
+                        String subjectInfo = schedule.getSubjectName();
+                        if (schedule.getInstructorName() != null && !schedule.getInstructorName().isEmpty()) {
+                            subjectInfo += "\n" + schedule.getInstructorName();
+                        }
+                        row.setSubject(dayIndex, subjectInfo);
+                    }
+                }
             }
 
-            ScheduleRow row = timeToRow.get(minutes);
-            row.setSubject(i, schedule.getSubjectName());
+            rows.add(row);
         }
+
+        // Sort rows by time
+        rows.sort((r1, r2) -> Integer.compare(parseTime(r1.getTime()), parseTime(r2.getTime())));
 
         adapter.updateRows(rows);
         scheduleRecyclerView.setVisibility(View.VISIBLE);
         tvNoSchedule.setVisibility(View.GONE);
     }
 
-    private int parseTime(String timeFrame) {
+    private int[] getDayIndices(String day) {
+        if (day == null) return new int[]{0, 1, 2, 3, 4}; // Default to all days
+
+        switch (day.toLowerCase()) {
+            case "monday":
+            case "mon":
+                return new int[]{0};
+            case "tuesday":
+            case "tue":
+                return new int[]{1};
+            case "wednesday":
+            case "wed":
+                return new int[]{2};
+            case "thursday":
+            case "thu":
+                return new int[]{3};
+            case "friday":
+            case "fri":
+                return new int[]{4};
+            case "m-f":
+            default:
+                return new int[]{0, 1, 2, 3, 4}; // All weekdays
+        }
+    }
+
+    private int parseTime(String timeStr) {
         try {
-            String start = timeFrame.split(" - ")[0];
-            String[] parts = start.split(" ");
+            // timeStr is like "8:00 AM"
+            String[] parts = timeStr.trim().split(" ");
+            if (parts.length < 2) {
+                // Try parsing as just time without AM/PM
+                String[] hm = timeStr.split(":");
+                int hour = Integer.parseInt(hm[0]);
+                int min = hm.length > 1 ? Integer.parseInt(hm[1]) : 0;
+                return hour * 60 + min;
+            }
+
             String time = parts[0];
             String ampm = parts[1];
             String[] hm = time.split(":");
             int hour = Integer.parseInt(hm[0]);
             int min = Integer.parseInt(hm[1]);
-            if (ampm.equals("PM") && hour != 12) hour += 12;
-            if (ampm.equals("AM") && hour == 12) hour = 0;
+            if (ampm.equals("PM") && hour != 12)
+                hour += 12;
+            if (ampm.equals("AM") && hour == 12)
+                hour = 0;
             return hour * 60 + min;
         } catch (Exception e) {
-            Log.e(TAG, "Error parsing time: " + timeFrame, e);
+            Log.e(TAG, "Error parsing time: " + timeStr, e);
             return 0;
         }
     }
@@ -228,7 +252,6 @@ public class ScheduleActivity extends AppCompatActivity {
         tvNoSchedule.setVisibility(View.VISIBLE);
         scheduleProgressBar.setVisibility(View.GONE);
     }
-
 
     @Override
     public boolean onOptionsItemSelected(android.view.MenuItem item) {

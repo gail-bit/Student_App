@@ -12,13 +12,23 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.activity.studentapp.R;
 import com.activity.studentapp.model.Subject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SubjectAdapter extends RecyclerView.Adapter<SubjectAdapter.SubjectViewHolder> {
     private List<Subject> subjects;
+    private OnSubjectClickListener listener;
+
+    public interface OnSubjectClickListener {
+        void onSubjectClick(Subject subject);
+    }
 
     public SubjectAdapter(List<Subject> subjects) {
         this.subjects = subjects;
+    }
+
+    public void setOnSubjectClickListener(OnSubjectClickListener listener) {
+        this.listener = listener;
     }
 
     @NonNull
@@ -32,7 +42,7 @@ public class SubjectAdapter extends RecyclerView.Adapter<SubjectAdapter.SubjectV
     @Override
     public void onBindViewHolder(@NonNull SubjectViewHolder holder, int position) {
         Subject subject = subjects.get(position);
-        holder.bind(subject);
+        holder.bind(subject, listener);
     }
 
     @Override
@@ -41,7 +51,7 @@ public class SubjectAdapter extends RecyclerView.Adapter<SubjectAdapter.SubjectV
     }
 
     public void updateSubjects(List<Subject> newSubjects) {
-        this.subjects = newSubjects;
+        this.subjects = new ArrayList<>(newSubjects);
         notifyDataSetChanged();
     }
 
@@ -59,12 +69,19 @@ public class SubjectAdapter extends RecyclerView.Adapter<SubjectAdapter.SubjectV
             roomText = itemView.findViewById(R.id.roomText);
         }
 
-        public void bind(Subject subject) {
+        public void bind(Subject subject, OnSubjectClickListener listener) {
             Log.d("SubjectAdapter", "Binding subject: " + subject.getName());
             subjectNameText.setText(subject.getName() != null ? subject.getName() : "No Name");
             subjectScheduleText.setText(subject.getSchedule() != null ? subject.getSchedule() : "No Schedule");
             instructorNameText.setText(subject.getInstructor() != null ? subject.getInstructor() : "No Instructor");
             roomText.setText(subject.getRoom() != null ? subject.getRoom() : "No Room");
+
+            // Set click listener for the entire item
+            itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onSubjectClick(subject);
+                }
+            });
         }
     }
 }
