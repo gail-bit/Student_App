@@ -310,10 +310,43 @@ public class StudentLoginActivity extends AppCompatActivity {
                 binding.btnLogin.setEnabled(false);
                 binding.btnLogin.setText("Logging in...");
 
-                // Use student ID as email for login
-                String email = studentId + "@school.edu";
-                android.util.Log.d("StudentLogin", "Using email for login: " + email);
-                signInWithEmailAndPassword(email, password, studentId);
+                // Query Firestore for student email using studentId
+                android.util.Log.d("StudentLogin", "Starting Firestore query for studentId: " + studentId);
+                db.collection("students").whereEqualTo("studentId", studentId).get()
+                        .addOnCompleteListener(task -> {
+                            android.util.Log.d("StudentLogin",
+                                    "Firestore query completed. Success: " + task.isSuccessful());
+                            if (task.isSuccessful() && task.getResult() != null) {
+                                android.util.Log.d("StudentLogin", "Query result size: " + task.getResult().size());
+                                if (!task.getResult().isEmpty()) {
+                                    DocumentSnapshot doc = task.getResult().getDocuments().get(0);
+                                    String email = doc.getString("email");
+                                    android.util.Log.d("StudentLogin", "Retrieved email: " + email);
+                                    if (email != null && !email.isEmpty()) {
+                                        android.util.Log.d("StudentLogin", "Found email for student: " + email);
+                                        signInWithEmailAndPassword(email, password, studentId);
+                                    } else {
+                                        android.util.Log.d("StudentLogin", "Email is null or empty");
+                                        showToast("Student email not found. Please contact administration.");
+                                        resetLoginButton();
+                                    }
+                                } else {
+                                    android.util.Log.d("StudentLogin",
+                                            "No documents found for studentId: " + studentId);
+                                    showToast("Student ID not found. Please contact administration.");
+                                    resetLoginButton();
+                                }
+                            } else {
+                                android.util.Log.d("StudentLogin", "Query failed or result is null");
+                                showToast("Student ID not found. Please contact administration.");
+                                resetLoginButton();
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            android.util.Log.e("StudentLogin", "Error querying student: " + e.getMessage());
+                            showToast("Error verifying student ID: " + e.getMessage());
+                            resetLoginButton();
+                        });
             }
         });
 
@@ -365,18 +398,15 @@ public class StudentLoginActivity extends AppCompatActivity {
                         android.util.Log.e("StudentLogin", "Authentication failed: " + errorMessage);
 
                         // Check if this is a new student account that needs to be created
-                        checkAndCreateStudentAccount(email, password);
+                        checkAndCreateStudentAccount(email, password, studentId);
                     }
                 });
     }
 
-    private void checkAndCreateStudentAccount(String email, String password) {
+    private void checkAndCreateStudentAccount(String email, String password, String studentId) {
         android.util.Log.d("StudentLogin", "Checking if student account needs to be created for: " + email);
 
-        // Use the email to extract student ID
-        String studentId = email.replace("@school.edu", "");
-
-        // Check if student exists in Firestore
+        // Check if student exists in Firestore (already verified, but double-check)
         db.collection("students").whereEqualTo("studentId", studentId).get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
@@ -384,8 +414,7 @@ public class StudentLoginActivity extends AppCompatActivity {
                         android.util.Log.d("StudentLogin",
                                 "Student found in Firestore, checking Firebase Auth account");
 
-                        String authEmail = studentId + "@school.edu";
-                        mAuth.fetchSignInMethodsForEmail(authEmail)
+                        mAuth.fetchSignInMethodsForEmail(email)
                                 .addOnCompleteListener(fetchTask -> {
                                     if (fetchTask.isSuccessful()) {
                                         java.util.List<String> signInMethods = fetchTask.getResult().getSignInMethods();
@@ -399,7 +428,7 @@ public class StudentLoginActivity extends AppCompatActivity {
                                             // Account doesn't exist, create it
                                             android.util.Log.d("StudentLogin",
                                                     "Firebase Auth account doesn't exist, creating account");
-                                            createFirebaseAuthAccount(authEmail, password, email, studentId);
+                                            createFirebaseAuthAccount(email, password, studentId);
                                         }
                                     } else {
                                         String fetchError = fetchTask.getException() != null
@@ -425,22 +454,31 @@ public class StudentLoginActivity extends AppCompatActivity {
                 });
     }
 
-    private void createFirebaseAuthAccount(String authEmail, String password, String originalEmail, String studentId) {
-        mAuth.createUserWithEmailAndPassword(authEmail, password)
+    private void createFirebaseAuthAccount(String email, String password, String studentId) {
+        mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(createTask -> {
                     if (createTask.isSuccessful()) {
                         android.util.Log.d("StudentLogin",
                                 "Firebase Auth account created successfully");
                         // Now try to sign in again
-                        signInWithEmailAndPassword(originalEmail, password, studentId);
+                        signInWithEmailAndPassword(email, password, studentId);
                     } else {
-                        String createError = createTask.getException() != null
-                                ? createTask.getException().getMessage()
-                                : "Unknown error";
-                        android.util.Log.e("StudentLogin",
-                                "Failed to create Firebase Auth account: " + createError);
-                        showToast("Account setup failed: " + createError);
-                        resetLoginButton();
+                        // Check if account already exists (from enrollment verification)
+                        if (createTask
+                                .getException() instanceof com.google.firebase.auth.FirebaseAuthUserCollisionException) {
+                            android.util.Log.d("StudentLogin",
+                                    "Account already exists, password is incorrect");
+                            showToast("Incorrect password. Please try again or reset your password.");
+                            resetLoginButton();
+                        } else {
+                            String createError = createTask.getException() != null
+                                    ? createTask.getException().getMessage()
+                                    : "Unknown error";
+                            android.util.Log.e("StudentLogin",
+                                    "Failed to create Firebase Auth account: " + createError);
+                            showToast("Account setup failed: " + createError);
+                            resetLoginButton();
+                        }
                     }
                 });
     }
@@ -678,7 +716,7 @@ public class StudentLoginActivity extends AppCompatActivity {
         btnSendReset.setEnabled(false);
         btnSendReset.setText("Sending...");
 
-        // First check if the email is registered in Firebase Auth
+        // Check if the email is registered in Firebase Auth
         Log.d("StudentLogin", "Starting Firebase Auth check for email: " + email);
         Log.d("StudentLogin", "Firebase Auth instance: " + mAuth);
         Log.d("StudentLogin", "Firebase Auth app: " + mAuth.getApp());
@@ -703,8 +741,7 @@ public class StudentLoginActivity extends AppCompatActivity {
                             sendPasswordResetEmail(email, btnSendReset, dialog);
                         } else {
                             // Email not registered in Firebase Auth
-                            btnSendReset.setEnabled(true);
-                            btnSendReset.setText("Send Reset Link");
+                            resetPasswordButton(btnSendReset);
                             showToast(
                                     "This email address is not registered for password reset. Please contact your administrator.");
                             Log.w("StudentLogin", "Email " + email
@@ -712,8 +749,7 @@ public class StudentLoginActivity extends AppCompatActivity {
                         }
                     } else {
                         // Error checking email registration
-                        btnSendReset.setEnabled(true);
-                        btnSendReset.setText("Send Reset Link");
+                        resetPasswordButton(btnSendReset);
                         String errorMessage = fetchTask.getException() != null ? fetchTask.getException().getMessage()
                                 : "Unknown error";
                         showToast("Error checking email registration: " + errorMessage);
@@ -723,13 +759,17 @@ public class StudentLoginActivity extends AppCompatActivity {
                 });
     }
 
+    private void resetPasswordButton(com.google.android.material.button.MaterialButton btnSendReset) {
+        btnSendReset.setEnabled(true);
+        btnSendReset.setText("Send Reset Link");
+    }
+
     private void sendPasswordResetEmail(String email, com.google.android.material.button.MaterialButton btnSendReset,
             android.app.Dialog dialog) {
         mAuth.sendPasswordResetEmail(email)
                 .addOnCompleteListener(task -> {
                     // Reset UI state
-                    btnSendReset.setEnabled(true);
-                    btnSendReset.setText("Send Reset Link");
+                    resetPasswordButton(btnSendReset);
 
                     if (task.isSuccessful()) {
                         showToast("Password reset email sent to " + email
