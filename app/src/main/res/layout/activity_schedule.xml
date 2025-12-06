@@ -38,64 +38,82 @@
                     android:orientation="vertical">
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:background="@color/dark_green">
 
                         <TextView
-                            android:layout_width="100dp"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:padding="16dp"
                             android:background="@drawable/cell_border"
                             android:gravity="center"
                             android:text="Time/Date"
-                            android:textColor="@android:color/black" />
+                            android:textColor="@android:color/black"
+                            android:maxLines="3"
+                            android:ellipsize="end" />
 
                         <TextView
-                            android:layout_width="120dp"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:padding="16dp"
                             android:background="@drawable/cell_border"
                             android:gravity="center"
                             android:text="Monday"
-                            android:textColor="@android:color/black" />
+                            android:textColor="@android:color/black"
+                            android:maxLines="3"
+                            android:ellipsize="end" />
 
                         <TextView
-                            android:layout_width="120dp"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:padding="16dp"
                             android:background="@drawable/cell_border"
                             android:gravity="center"
                             android:text="Tuesday"
-                            android:textColor="@android:color/black" />
+                            android:textColor="@android:color/black"
+                            android:maxLines="3"
+                            android:ellipsize="end" />
 
                         <TextView
-                            android:layout_width="120dp"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:padding="16dp"
                             android:background="@drawable/cell_border"
                             android:gravity="center"
                             android:text="Wednesday"
-                            android:textColor="@android:color/black" />
+                            android:textColor="@android:color/black"
+                            android:maxLines="3"
+                            android:ellipsize="end" />
 
                         <TextView
-                            android:layout_width="120dp"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:padding="16dp"
                             android:background="@drawable/cell_border"
                             android:gravity="center"
                             android:text="Thursday"
-                            android:textColor="@android:color/black" />
+                            android:textColor="@android:color/black"
+                            android:maxLines="3"
+                            android:ellipsize="end" />
 
                         <TextView
-                            android:layout_width="120dp"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:padding="16dp"
                             android:background="@drawable/cell_border"
                             android:gravity="center"
                             android:text="Friday"
-                            android:textColor="@android:color/black" />
+                            android:textColor="@android:color/black"
+                            android:maxLines="3"
+                            android:ellipsize="end" />
 
                     </LinearLayout>
 
